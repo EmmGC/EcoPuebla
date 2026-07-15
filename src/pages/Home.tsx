@@ -349,7 +349,7 @@ const Home: React.FC = () => {
                     <div className="map-canvas-container">
                       
                       {/* Responsive SVG Map canvas */}
-                      <svg className="svg-map-graphics" viewBox="0 0 390 550" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="svg-map-graphics" viewBox="0 0 390 550" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
                         <rect width="390" height="550" className="map-bg" />
                         <path d="M 0,80 Q 80,40 120,110 T 60,190 Z" className="map-forest" />
                         <rect x="230" y="40" width="130" height="70" rx="12" className="map-forest" />

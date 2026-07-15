@@ -197,9 +197,13 @@
 .map-canvas-container {
   width: 100%;
   height: 100%;
+  min-height: 0;
   background-color: #141414;
   position: relative;
   overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .svg-map-graphics {
@@ -744,10 +748,24 @@
     display: none !important;
   }
 
+  /* Full-height chain: layout -> map-view -> pane-switcher */
+  .desktop-map-view {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
   .mobile-pane-switcher {
+    flex: 1;
+    min-height: 0;
     width: 100%;
     height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
   }
 
   .mobile-tab-view {
@@ -767,6 +785,15 @@
     flex-direction: column;
     opacity: 1;
     pointer-events: auto;
+    overflow: hidden;
+  }
+
+  /* SVG map fills parent flex column */
+  .svg-map-graphics {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    display: block;
   }
 
   /* Bottom sheet behavior */
@@ -778,9 +805,11 @@
     border-top-left-radius: var(--border-radius-lg);
     border-top-right-radius: var(--border-radius-lg);
     z-index: 300;
-    padding: 12px 18px 24px;
+    padding: 10px 14px 20px;
     transform: translateY(100%);
     transition: transform 0.35s cubic-bezier(0.32, 0.94, 0.6, 1);
+    max-height: 60%;
+    overflow-y: auto;
   }
 
   .detail-panel-sheet.visible {
@@ -794,6 +823,46 @@
     border-radius: 2px;
     margin: 0 auto 12px;
     cursor: pointer;
+  }
+
+  /* Narrow viewport adjustments (<=320px) */
+  .header-wireframe {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 10px;
+  }
+
+  .chips-bar-container {
+    height: 44px;
+    min-height: 44px;
+    padding: 6px 0;
+  }
+
+  .chip-button {
+    padding: 3px 9px;
+    font-size: 11px;
+  }
+
+  .fixed-nav-bar {
+    height: 54px;
+    min-height: 54px;
+    padding: 4px 8px 10px;
+  }
+
+  .list-view-header {
+    padding: 12px 12px 8px;
+  }
+
+  .list-scroll-area {
+    padding: 0 12px 20px;
+  }
+
+  .center-list-card {
+    padding: 12px;
+  }
+
+  .card-title {
+    font-size: 13.5px;
   }
 }
 
