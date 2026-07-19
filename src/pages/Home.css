@@ -183,6 +183,35 @@
   font-size: 13px;
 }
 
+/* Sub-filter bar — second row, appears below the main category chips */
+.sub-filter-bar {
+  height: 40px;
+  min-height: 40px;
+  background-color: rgba(18, 18, 18, 0.7);
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chip-button.sub-chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-xl);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+.chip-button.sub-chip.active {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.12);
+}
+
 /* Split Pane Layout (Web Dashboard) */
 .split-pane-layout {
   display: flex;
@@ -422,26 +451,42 @@
 
 .route-cta-btn {
   flex: 1;
-  background: linear-gradient(135deg, var(--color-accent) 0%, #059669 100%);
-  border: none;
   cursor: pointer;
   padding: 12px 20px;
   border-radius: var(--border-radius-md);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: #101010;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
   transition: all 0.2s ease;
+  text-decoration: none;
 }
 
-.route-cta-btn:hover {
+.route-cta-primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #059669 100%);
+  border: none;
+  color: #101010;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.route-cta-primary:hover {
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
   opacity: 0.95;
 }
+
+.route-cta-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  color: var(--text-primary);
+}
+
+.route-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 
 /* LIST CONTAINER */
 .list-view-container {
@@ -550,21 +595,20 @@
   margin-top: 10px;
 }
 
-.card-rating-wrap {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.star-icon {
-  color: #fbbf24;
-}
 
 .card-badge-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  overflow: hidden;
+  max-height: 48px; /* ~2 filas de badges como máximo */
+}
+
+.card-material-badge-more {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-muted);
+  font-style: italic;
+  letter-spacing: 0.2px;
 }
 
 .card-material-badge {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
+import { IonPage, IonContent, IonIcon, IonToast } from '@ionic/react';
 import {
   menuOutline,
   searchOutline,
@@ -11,98 +11,26 @@ import {
   star,
   leafOutline,
   chevronForwardOutline,
-  settingsOutline,
   timeOutline,
   locationOutline,
-  alertCircleOutline
+  alertCircleOutline,
+  callOutline,
+  logoWhatsapp,
+  mailOutline,
+  linkOutline
 } from 'ionicons/icons';
 import './Home.css';
-
-// Interface definitions
-interface RecyclingCenter {
-  id: number;
-  name: string;
-  materials: string[];
-  hours: string;
-  address: string;
-  rating: number;
-  distance: string;
-  x: number; // SVG center coordinate X
-  y: number; // SVG center coordinate Y
-  icon: string;
-}
+import { centersData, RecyclingCenter, SUB_FILTER_GROUPS, Categoria } from '../data/centersData';
 
 const Home: React.FC = () => {
-  // Mock recycling center locations database
-  const centersData: RecyclingCenter[] = [
-    {
-      id: 1,
-      name: 'EcoPunto Central',
-      materials: ['Plástico', 'Papel', 'Vidrio'],
-      hours: 'Lun - Sáb: 08:00 - 18:00',
-      address: 'Av. Reforma 402, Col. Centro',
-      rating: 4.8,
-      distance: '0.8 km',
-      x: 120,
-      y: 150,
-      icon: '♻️'
-    },
-    {
-      id: 2,
-      name: 'Eko-Pilas Juárez',
-      materials: ['Pilas', 'Electrónicos'],
-      hours: 'Lun - Vie: 09:00 - 17:00 / Sáb: 09:00 - 14:00',
-      address: 'Calle Juárez 892, Col. Juárez',
-      rating: 4.9,
-      distance: '1.5 km',
-      x: 280,
-      y: 220,
-      icon: '🔋'
-    },
-    {
-      id: 3,
-      name: 'Plaza Recicla Sur',
-      materials: ['Plástico', 'Vidrio', 'Electrónicos', 'Papel'],
-      hours: 'Lun - Dom: 10:00 - 20:00',
-      address: 'Blvd. Atlixco 3409, Zona Sur',
-      rating: 4.5,
-      distance: '2.3 km',
-      x: 190,
-      y: 340,
-      icon: '🏢'
-    },
-    {
-      id: 4,
-      name: 'Verde Alternativo',
-      materials: ['Papel', 'Plástico', 'Pilas'],
-      hours: 'Lun - Vie: 08:30 - 19:30',
-      address: 'Av. 25 Poniente 1702, Volcanes',
-      rating: 4.7,
-      distance: '3.1 km',
-      x: 80,
-      y: 460,
-      icon: '🌿'
-    },
-    {
-      id: 5,
-      name: 'Acopio Anzures',
-      materials: ['Electrónicos', 'Pilas', 'Papel'],
-      hours: 'Lun - Sáb: 09:00 - 18:00',
-      address: 'Calle 39 Oriente 1204, Anzures',
-      rating: 4.6,
-      distance: '1.2 km',
-      x: 310,
-      y: 90,
-      icon: '🔌'
-    }
-  ];
 
   // User location node
   const userLocation = { x: 150, y: 250 };
 
-  // States
+  // ── Estados ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'mapa' | 'lista'>('mapa');
   const [activeFilter, setActiveFilter] = useState<string>('Todos');
+  const [activeSubFilter, setActiveSubFilter] = useState<string | null>(null);
   const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   const [showRoute, setShowRoute] = useState<boolean>(false);
@@ -110,11 +38,16 @@ const Home: React.FC = () => {
   const [isSearchBarOpen, setIsSearchBarOpen] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [locationPulse, setLocationPulse] = useState<boolean>(false);
+  const [showNoLinkToast, setShowNoLinkToast] = useState<boolean>(false);
 
-  // Close sheet on filter change
+  // Sub-filtros disponibles para la categoría activa
+  const currentSubFilters = SUB_FILTER_GROUPS[activeFilter as Categoria] ?? [];
+
+  // Resetear sub-filtro y cerrar panel cuando cambia el filtro principal
   useEffect(() => {
     setIsSheetOpen(false);
     setShowRoute(false);
+    setActiveSubFilter(null);
   }, [activeFilter]);
 
   // Click on location button
@@ -143,25 +76,43 @@ const Home: React.FC = () => {
     setShowRoute(false);
   };
 
-  // Filter centers based on active category chip and search query
+  // Filtrado: categoría principal → sub-filtro → búsqueda libre
   const filteredCenters = centersData.filter(center => {
-    const matchesCategory = activeFilter === 'Todos' || center.materials.includes(activeFilter);
-    const matchesSearch = searchQuery === '' || 
-      center.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      center.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      center.materials.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
+    // 1. Filtro principal por categoría
+    const matchesCategory = activeFilter === 'Todos' || center.categoria === activeFilter;
+
+    // 2. Sub-filtro: compara keywords del sub-filtro contra materials del centro
+    const matchesSubFilter = !activeSubFilter
+      ? true
+      : (() => {
+          const group = currentSubFilters.find(sf => sf.label === activeSubFilter);
+          if (!group) return true;
+          return center.materials.some(m =>
+            group.keywords.some(kw => m.toLowerCase().includes(kw.toLowerCase()))
+          );
+        })();
+
+    // 3. Búsqueda libre
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = q === '' ||
+      center.name.toLowerCase().includes(q) ||
+      center.address.toLowerCase().includes(q) ||
+      center.details.toLowerCase().includes(q) ||
+      center.materials.some(m => m.toLowerCase().includes(q));
+
+    return matchesCategory && matchesSubFilter && matchesSearch;
   });
 
   // Helper renderer: Center details card (used on both Mobile Sheet and Desktop Overlay)
   const renderDetailPanelContent = () => {
     if (!selectedCenter) return null;
+    const { contact, link, details } = selectedCenter;
     return (
       <div className="detail-panel-sheet-content">
         <div className="detail-panel-header">
           <div>
             <div className="detail-panel-title">{selectedCenter.name}</div>
-            <div className="detail-panel-subtitle">Punto Autorizado de Reciclaje</div>
+            <div className="detail-panel-subtitle">Punto de Acopio — {selectedCenter.materials.join(', ')}</div>
           </div>
           <button className="close-panel-btn" onClick={() => {
             setIsSheetOpen(false);
@@ -171,22 +122,52 @@ const Home: React.FC = () => {
           </button>
         </div>
 
+        {/* Dirección */}
         <div className="panel-row-info">
           <IonIcon icon={locationOutline} className="panel-row-icon" />
-          <span>{selectedCenter.address} ({selectedCenter.distance})</span>
+          <span>{selectedCenter.address}</span>
         </div>
 
-        <div className="panel-row-info">
-          <IonIcon icon={timeOutline} className="panel-row-icon" />
-          <span>{selectedCenter.hours}</span>
-        </div>
+        {/* Qué reciben */}
+        {details && (
+          <div className="panel-row-info" style={{ alignItems: 'flex-start' }}>
+            <IonIcon icon={leafOutline} className="panel-row-icon" style={{ marginTop: '2px' }} />
+            <span style={{ fontSize: '12px', lineHeight: '1.5', color: 'var(--text-secondary)' }}>{details}</span>
+          </div>
+        )}
 
-        <div style={{ marginTop: '14px' }}>
-          <div className="materials-section-title">Materiales Aceptados:</div>
+        {/* Contacto */}
+        {(contact.whatsapp || (contact.tel && contact.tel.length > 0) || contact.email) && (
+          <div style={{ marginTop: '12px' }}>
+            <div className="materials-section-title">Contacto:</div>
+            {contact.whatsapp && (
+              <div className="panel-row-info">
+                <IonIcon icon={logoWhatsapp} className="panel-row-icon" style={{ color: '#25d366' }} />
+                <span>{contact.whatsapp}</span>
+              </div>
+            )}
+            {contact.tel?.map((t) => (
+              <div className="panel-row-info" key={t}>
+                <IonIcon icon={callOutline} className="panel-row-icon" />
+                <span>{t}</span>
+              </div>
+            ))}
+            {contact.email && (
+              <div className="panel-row-info">
+                <IonIcon icon={mailOutline} className="panel-row-icon" />
+                <span>{contact.email}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Materiales */}
+        <div style={{ marginTop: '12px' }}>
+          <div className="materials-section-title">Categoría:</div>
           <div className="materials-pills-wrap">
             {selectedCenter.materials.map((mat) => (
-              <span 
-                key={mat} 
+              <span
+                key={mat}
                 className={`material-chip-tag ${activeFilter === mat ? 'accented' : ''}`}
               >
                 {mat}
@@ -195,13 +176,30 @@ const Home: React.FC = () => {
           </div>
         </div>
 
+        {/* Acciones */}
         <div className="panel-actions-wrapper">
-          <button 
-            className="route-cta-btn"
+          <button
+            className="route-cta-btn route-cta-primary"
             onClick={handleToggleRoute}
           >
             <IonIcon icon={navigateOutline} />
             <span>{showRoute ? 'Cancelar Ruta' : 'Trazar Ruta'}</span>
+          </button>
+          <button
+            className="route-cta-btn route-cta-secondary"
+            onClick={() => {
+              if (link) {
+                // Si el link no tiene protocolo, agregar https://
+                const targetUrl = link.startsWith('http') ? link : `https://${link}`;
+                window.open(targetUrl, '_blank', 'noopener,noreferrer');
+              } else {
+                setShowNoLinkToast(true);
+              }
+            }}
+            style={{ opacity: link ? 1 : 0.6 }}
+          >
+            <IonIcon icon={linkOutline} />
+            <span>{link ? 'Más info' : 'Sin enlace'}</span>
           </button>
         </div>
       </div>
@@ -223,23 +221,27 @@ const Home: React.FC = () => {
         <div className="card-address">{center.address}</div>
         
         <div className="card-badge-row">
-          {center.materials.map((mat) => (
-            <span 
+          {center.materials.slice(0, 3).map((mat) => (
+            <span
               key={mat}
-              className={`card-material-badge ${activeFilter === mat ? 'card-material-badge-active' : ''}`}
+              className={`card-material-badge ${activeFilter === mat || center.categoria === activeFilter ? 'card-material-badge-active' : ''}`}
             >
               {mat}
             </span>
           ))}
+          {center.materials.length > 3 && (
+            <span className="card-material-badge card-material-badge-more">
+              +{center.materials.length - 3}
+            </span>
+          )}
         </div>
 
         <div className="card-meta-row">
-          <div className="card-rating-wrap">
-            <IonIcon icon={star} className="star-icon" />
-            <span>{center.rating}</span>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            {center.categoria}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '11px', color: 'var(--color-accent)' }}>
-            <span>Ver en Mapa</span>
+            <span>Ver detalles</span>
             <IonIcon icon={chevronForwardOutline} />
           </div>
         </div>
@@ -287,25 +289,49 @@ const Home: React.FC = () => {
             {/* Filter buttons (Mobile Chips container) */}
             <div className="chips-bar-container">
               <div className="chips-bar-scrollable no-scrollbar">
-                {['Todos', 'Plástico', 'Pilas', 'Electrónicos', 'Vidrio', 'Papel'].map((cat) => (
-                  <button 
-                    key={cat}
-                    className={`chip-button ${activeFilter === cat ? 'active' : ''}`}
-                    onClick={() => setActiveFilter(cat)}
+                {[
+                  { label: 'Todos', icon: '♻️' },
+                  { label: 'Orgánicos', icon: '🌿' },
+                  { label: 'Aceite', icon: '🛢️' },
+                  { label: 'Medicamentos', icon: '💊' },
+                  { label: 'Ropa', icon: '👕' },
+                  { label: 'Electrónicos', icon: '💻' },
+                  { label: 'Escuelas', icon: '🏫' },
+                ].map((cat) => (
+                  <button
+                    key={cat.label}
+                    className={`chip-button ${activeFilter === cat.label ? 'active' : ''}`}
+                    onClick={() => setActiveFilter(cat.label)}
                   >
-                    <span className="chip-icon">
-                      {cat === 'Todos' && '♻️'}
-                      {cat === 'Plástico' && '🥤'}
-                      {cat === 'Pilas' && '🔋'}
-                      {cat === 'Electrónicos' && '💻'}
-                      {cat === 'Vidrio' && '🍾'}
-                      {cat === 'Papel' && '📦'}
-                    </span>
-                    <span>{cat}</span>
+                    <span className="chip-icon">{cat.icon}</span>
+                    <span>{cat.label}</span>
                   </button>
                 ))}
               </div>
             </div>
+
+            {/* Sub-filtros (aparecen solo cuando la categoría activa los tiene) */}
+            {currentSubFilters.length > 0 && (
+              <div className="chips-bar-container sub-filter-bar">
+                <div className="chips-bar-scrollable no-scrollbar">
+                  <button
+                    className={`chip-button sub-chip ${!activeSubFilter ? 'active' : ''}`}
+                    onClick={() => setActiveSubFilter(null)}
+                  >
+                    <span>Todos</span>
+                  </button>
+                  {currentSubFilters.map((sf) => (
+                    <button
+                      key={sf.label}
+                      className={`chip-button sub-chip ${activeSubFilter === sf.label ? 'active' : ''}`}
+                      onClick={() => setActiveSubFilter(prev => prev === sf.label ? null : sf.label)}
+                    >
+                      <span>{sf.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* RESPONSIVE LAYOUT ENGINE */}
             <div className="split-pane-layout">
@@ -495,6 +521,14 @@ const Home: React.FC = () => {
               </div>
             </aside>
 
+            <IonToast
+              isOpen={showNoLinkToast}
+              onDidDismiss={() => setShowNoLinkToast(false)}
+              message="Aún no se cuenta con un enlace de información para este sitio."
+              duration={3000}
+              position="bottom"
+              style={{ '--background': 'var(--bg-tertiary)', '--color': 'var(--text-primary)' }}
+            />
           </div>
         </div>
       </IonContent>
