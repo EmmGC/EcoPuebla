@@ -10,7 +10,7 @@ El proyecto está diseñado de forma responsiva (mobile-first), simulando la exp
 
 - **Framework principal**: React
 - **Componentes de interfaz**: [Ionic React](https://ionicframework.com/docs/react) (para un comportamiento responsivo y táctil nativo).
-- **Mapa**: [Leaflet](https://leafletjs.com/) + [react-leaflet](https://react-leaflet.js.org/) con tiles de OpenStreetMap/CARTO (100% gratis, sin API key). Geolocalización real vía la Geolocation API del navegador. El botón "Cómo llegar" abre la ruta calculada en Google Maps (deep link, sin motor de rutas propio).
+- **Mapa y Geolocalización**: [Leaflet](https://leafletjs.com/) + [react-leaflet](https://react-leaflet.js.org/) con y tiles de OpenStreetMap/CARTO. Geolocalización real vía la Geolocation API del navegador para calcular automáticamente la distancia a cada centro (fórmula de Haversine) y ordenar la lista por proximidad. El botón "Cómo llegar" realiza una búsqueda general por nombre y dirección en Google Maps para garantizar la confirmación de la sede por parte del usuario.
 - **Tipado y robustez**: TypeScript
 - **Compilador y servidor dev**: Vite
 - **Estilos**: Vanilla CSS con variables personalizadas y un diseño moderno estilo Dark Mode.
@@ -86,7 +86,9 @@ Añadir o actualizar información es sumamente sencillo. Abre el archivo `src/da
     email: 'info@sitio.com'  // Opcional
   },
   details: 'Descripción detallada de lo que reciben y sus dinámicas.',
-  link: 'https://tusitio.com' // Opcional (si no tiene, se mostrará como "Sin enlace")
+  link: 'https://tusitio.com', // Opcional (si no tiene, se mostrará como "Sin enlace")
+  isMultipleSites: true, // Opcional: muestra indicativo visual de "Múltiples Sedes"
+  isHomePickup: true     // Opcional: muestra indicativo visual de "A Domicilio"
 }
 ```
 

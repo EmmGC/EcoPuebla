@@ -28,6 +28,8 @@ export interface RecyclingCenter {
   };
   details: string;
   link?: string;
+  isMultipleSites?: boolean;
+  isHomePickup?: boolean;
 }
 
 // ─── Sub-filtros por categoría ─────────────────────────────────────────────────
@@ -81,6 +83,7 @@ export const centersData: RecyclingCenter[] = [
     details: 'Restos de frutas y verduras, café, hojas, residuos orgánicos de hogares, negocios y organizaciones.',
     contact: { whatsapp: '2224607173' },
     link: 'https://lasplantasdebruce.com/?utm_source=chatgpt.com',
+    isHomePickup: true,
   },
   {
     id: 2,
@@ -107,6 +110,7 @@ export const centersData: RecyclingCenter[] = [
     icon: '🌿',
     details: 'Empresa que recoge a domicilio residuos orgánicos en botes que ellos proporcionan para regresarlos en tierra. (Se paga el servicio)',
     contact: {},
+    isHomePickup: true,
   },
 
   // ── ACEITE ────────────────────────────────────────────────────────────────
@@ -179,6 +183,7 @@ export const centersData: RecyclingCenter[] = [
     details: 'Medicamentos caducos de uso doméstico (tabletas, cápsulas, jarabes, pomadas, etc.).',
     contact: {},
     link: 'https://www.singrem.org.mx/',
+    isMultipleSites: true,
   },
   {
     id: 10,
@@ -192,6 +197,7 @@ export const centersData: RecyclingCenter[] = [
     icon: '💊',
     details: 'Medicamentos caducos mediante contenedores de SINGREM instalados en sucursales participantes.',
     contact: {},
+    isMultipleSites: true,
   },
 
   // ── ROPA ──────────────────────────────────────────────────────────────────
@@ -207,6 +213,7 @@ export const centersData: RecyclingCenter[] = [
     details: 'Ropa para adultos mayores, cobijas, pañales para adulto, artículos de higiene, alimentos, zapatos y juguetes.',
     contact: { tel: ['222 242 2034', '222 211 7330'] },
     link: 'https://www.caritaspuebla.org/',
+    isMultipleSites: true,
   },
   {
     id: 14,
@@ -214,8 +221,9 @@ export const centersData: RecyclingCenter[] = [
     categoria: 'Ropa',
     materials: ['Ropa', 'Calzado', 'Juguetes', 'Artículos de uso personal'],
     hours: 'Consultar antes de acudir',
-    address: 'Consultar',
+    address: 'Av. del Sol 2910, Reserva Territorial Atlixcáyotl, Concepción la Cruz, 72197 San Bernardino Tlaxcalancingo, Pue.',
     distance: '--',
+    lat: 19.031473672077905, lng: -98.2451318,
     icon: '👕',
     details: 'Ropa para niños, jóvenes y familias, además de calzado, juguetes y artículos de uso personal.',
     contact: { tel: ['221 656 8961'] },
@@ -227,8 +235,9 @@ export const centersData: RecyclingCenter[] = [
     categoria: 'Ropa',
     materials: ['Ropa'],
     hours: 'Consultar',
-    address: 'Consultar',
+    address: 'C. 3 3, San José Vista Hermosa, 72190 Heroica Puebla de Zaragoza, Pue.',
     distance: '--',
+    lat: 19.038464439451268, lng: -98.24316298465769,
     icon: '👕',
     details: 'Ropa en buen estado para apoyar a niñas, niños y adolescentes con cáncer y sus familias.',
     contact: { tel: ['222 242 2672'] },
@@ -240,9 +249,10 @@ export const centersData: RecyclingCenter[] = [
     categoria: 'Ropa',
     materials: ['Ropa', 'Zapatos', 'Cobijas', 'Artículos para bazares'],
     hours: 'Consultar',
-    address: 'Consultar',
+    address: 'C. de La Niñez 1007, Reserva Territorial Atlixcáyotl, Concepción la Cruz, 72197 San Bernardino Tlaxcalancingo, Pue.',
     distance: '--',
     icon: '👕',
+    lat: 19.03469506419997, lng: -98.24593291349328,
     details: 'Ropa, zapatos, cobijas y artículos para bazares solidarios.',
     contact: { tel: ['222 295 18522'] },
     link: 'https://www.donadoresaltruistas.org/',
@@ -285,10 +295,10 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Parque Juárez, Parque Ecológico, Mercado Madero y Walmart Las Ánimas.',
     distance: '--',
-    lat: 19.0288041, lng: -98.2042630,
     icon: '💻',
     details: 'Electrónicos pequeños y medianos (CPU, teclados, celulares, cables, impresoras, etc.), además de otros reciclables. Pin ubicado en Parque Juárez; consulta el resto de puntos limpios en la ciudad.',
     contact: { tel: ['222 409 0636'] },
+    isMultipleSites: true,
   },
   {
     id: 22,
@@ -302,6 +312,7 @@ export const centersData: RecyclingCenter[] = [
     details: 'Electrónicos, metales y otros materiales reciclables.',
     contact: { tel: ['222 224 4905'] },
     link: 'https://reciclamexico.com.mx/centros-de-reciclaje/recicla-electronica-recielec/',
+    isMultipleSites: true,
   },
 
   // ── ESCUELAS ──────────────────────────────────────────────────────────────
@@ -373,6 +384,7 @@ export const centersData: RecyclingCenter[] = [
     details: 'Latas de aluminio. Programa de recolección interna y comunitaria.',
     contact: { tel: ['222 211 4660'] },
     link: 'https://cobaep.edu.mx',
+    isMultipleSites: true,
   },
   {
     id: 28,

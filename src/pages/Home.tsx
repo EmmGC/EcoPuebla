@@ -149,16 +149,12 @@ const Home: React.FC = () => {
   // precisas cae a una búsqueda por nombre en vez de inventar una ubicación.
   const handleGetDirections = () => {
     if (!selectedCenter) return;
-    let url: string;
-    if (selectedCenter.lat != null && selectedCenter.lng != null) {
-      const destination = `${selectedCenter.lat},${selectedCenter.lng}`;
-      url = userPosition
-        ? `https://www.google.com/maps/dir/?api=1&origin=${userPosition.lat},${userPosition.lng}&destination=${destination}&travelmode=driving`
-        : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
-    } else {
-      const query = encodeURIComponent(`${selectedCenter.name}, Puebla, México`);
-      url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    }
+    const isVirtualAddress = selectedCenter.address.toLowerCase().includes('consultar') || selectedCenter.address.toLowerCase().includes('recolección');
+    const queryTerm = isVirtualAddress
+      ? `${selectedCenter.name}, Puebla, México`
+      : `${selectedCenter.name}, ${selectedCenter.address}, Puebla, México`;
+    const query = encodeURIComponent(queryTerm);
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -226,6 +222,12 @@ const Home: React.FC = () => {
           <div>
             <div className="detail-panel-title">{selectedCenter.name}</div>
             <div className="detail-panel-subtitle">Punto de Acopio — {selectedCenter.materials.join(', ')}</div>
+            {(selectedCenter.isHomePickup || selectedCenter.isMultipleSites) && (
+              <div className="badges-container">
+                {selectedCenter.isHomePickup && <span className="badge-home-pickup">🚚 Servicio a Domicilio</span>}
+                {selectedCenter.isMultipleSites && <span className="badge-multiple-sites">📍 Múltiples Sucursales</span>}
+              </div>
+            )}
           </div>
           <button className="close-panel-btn" onClick={() => setIsSheetOpen(false)}>
             <IonIcon icon={closeOutline} />
@@ -347,6 +349,13 @@ const Home: React.FC = () => {
         </div>
         <div className="card-address">{center.address}</div>
         
+        {(center.isHomePickup || center.isMultipleSites) && (
+          <div className="badges-container" style={{ margin: '4px 0 2px' }}>
+            {center.isHomePickup && <span className="badge-home-pickup">🚚 A Domicilio</span>}
+            {center.isMultipleSites && <span className="badge-multiple-sites">📍 Múltiples Sedes</span>}
+          </div>
+        )}
+
         <div className="card-badge-row">
           {center.materials.slice(0, 3).map((mat) => (
             <span
