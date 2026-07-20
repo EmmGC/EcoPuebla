@@ -17,8 +17,9 @@ export interface RecyclingCenter {
   hours: string;
   address: string;
   distance: string;
-  x: number; // coordenada SVG simulada (se reemplaza cuando haya API de mapa)
-  y: number;
+  /** Coordenadas reales (WGS84). Solo se llenan cuando se conoce una dirección precisa y geocodificable. */
+  lat?: number;
+  lng?: number;
   icon: string;
   contact: {
     whatsapp?: string;
@@ -59,6 +60,11 @@ export const SUB_FILTER_GROUPS: Partial<Record<Categoria, SubFilterGroup[]>> = {
 };
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
+// Nota sobre lat/lng: varios centros no publican una dirección fija (recolección
+// a domicilio, "consultar", múltiples sucursales, etc.). Para esos se deja
+// lat/lng sin definir a propósito en vez de inventar una ubicación — el mapa los
+// omite como pin, pero siguen apareciendo en la lista y el botón "Cómo llegar"
+// cae a una búsqueda por nombre en vez de una ruta con coordenadas falsas.
 
 export const centersData: RecyclingCenter[] = [
 
@@ -71,7 +77,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar (Servicio o Recolección)',
     distance: '--',
-    x: 120, y: 150,
     icon: '🌿',
     details: 'Restos de frutas y verduras, café, hojas, residuos orgánicos de hogares, negocios y organizaciones.',
     contact: { whatsapp: '2224607173' },
@@ -85,7 +90,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Depende del programa vigente / Puebla',
     distance: '--',
-    x: 280, y: 220,
     icon: '🌿',
     details: 'Dependiendo del programa vigente, canalizan residuos orgánicos para procesos de compostaje y campañas ambientales.',
     contact: { tel: ['222 309 4400', '222 309 4300'] },
@@ -99,7 +103,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Recolección a domicilio',
     distance: '--',
-    x: 190, y: 340,
     icon: '🌿',
     details: 'Empresa que recoge a domicilio residuos orgánicos en botes que ellos proporcionan para regresarlos en tierra. (Se paga el servicio)',
     contact: {},
@@ -114,7 +117,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 310, y: 90,
     icon: '🛢️',
     details: 'Residuos de aceite, lubricante gastado, residuos sólidos industriales.',
     contact: { whatsapp: '2226272498', tel: ['01 (222) 286 62 38'] },
@@ -128,7 +130,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Autopista Federal Puebla-Orizaba No. 13, Parque Industrial Chachapa, Amozoc',
     distance: '--',
-    x: 150, y: 250,
+    lat: 19.0527869, lng: -98.1040437,
     icon: '🛢️',
     details: 'Aceite lubricante usado automotriz e industrial para reciclaje y valorización. Recomendable contactarlos en primera instancia.',
     contact: { tel: ['(222) 286 6238'] },
@@ -141,7 +143,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Carretera Industrial #17 Parque Industrial Chachapa, Puebla. Amozoc, Puebla.',
     distance: '--',
-    x: 250, y: 350,
+    lat: 19.0524, lng: -98.1035,
     icon: '🛢️',
     details: 'Aceites usados y otros residuos de manejo especial (principalmente mediante convenios con empresas).',
     contact: { tel: ['(222) 268 7102'], email: 'informes@reepsa.com.mx' },
@@ -157,7 +159,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Priv. 7-A Sur 4933, Col. Prados Agua Azul, Puebla, Pue.',
     distance: '--',
-    x: 320, y: 400,
+    lat: 19.0293686, lng: -98.2148563,
     icon: '💊',
     details: 'Medicamentos caducos, residuos peligrosos y residuos especiales para disposición final autorizada.',
     contact: { tel: ['(222) 262 2398'] },
@@ -171,7 +173,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consulta los puntos de acopio en su sitio web.',
     distance: '--',
-    x: 100, y: 300,
     icon: '💊',
     details: 'Medicamentos caducos de uso doméstico (tabletas, cápsulas, jarabes, pomadas, etc.).',
     contact: {},
@@ -185,7 +186,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Sucursales participantes',
     distance: '--',
-    x: 180, y: 120,
     icon: '💊',
     details: 'Medicamentos caducos mediante contenedores de SINGREM instalados en sucursales participantes.',
     contact: {},
@@ -200,7 +200,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar (Llamar antes)',
     address: 'Consultar',
     distance: '--',
-    x: 350, y: 150,
     icon: '👕',
     details: 'Ropa para adultos mayores, cobijas, pañales para adulto, artículos de higiene, alimentos, zapatos y juguetes.',
     contact: { tel: ['222 242 2034', '222 211 7330'] },
@@ -214,7 +213,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar antes de acudir',
     address: 'Consultar',
     distance: '--',
-    x: 80, y: 220,
     icon: '👕',
     details: 'Ropa para niños, jóvenes y familias, además de calzado, juguetes y artículos de uso personal.',
     contact: { tel: ['221 656 8961'] },
@@ -228,7 +226,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 140, y: 380,
     icon: '👕',
     details: 'Ropa en buen estado para apoyar a niñas, niños y adolescentes con cáncer y sus familias.',
     contact: { tel: ['222 242 2672'] },
@@ -242,7 +239,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 290, y: 320,
     icon: '👕',
     details: 'Ropa, zapatos, cobijas y artículos para bazares solidarios.',
     contact: { tel: ['222 295 18522'] },
@@ -258,7 +254,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 340, y: 210,
     icon: '💻',
     details: 'Computadoras, laptops, celulares, impresoras, cables, módems, teclados, monitores y otros residuos electrónicos.',
     contact: { tel: ['221 167 6739'] },
@@ -272,7 +267,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 60, y: 130,
     icon: '💻',
     details: 'Equipos electrónicos, metales, chatarra and residuos reciclables.',
     contact: { tel: ['222 271 3022'] },
@@ -286,9 +280,9 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Parque Juárez, Parque Ecológico, Mercado Madero y Walmart Las Ánimas.',
     distance: '--',
-    x: 370, y: 290,
+    lat: 19.0288041, lng: -98.2042630,
     icon: '💻',
-    details: 'Electrónicos pequeños y medianos (CPU, teclados, celulares, cables, impresoras, etc.), además de otros reciclables.',
+    details: 'Electrónicos pequeños y medianos (CPU, teclados, celulares, cables, impresoras, etc.), además de otros reciclables. Pin ubicado en Parque Juárez; consulta el resto de puntos limpios en la ciudad.',
     contact: { tel: ['222 409 0636'] },
   },
   {
@@ -299,7 +293,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Consultar',
     distance: '--',
-    x: 160, y: 70,
     icon: '💻',
     details: 'Electrónicos, metales y otros materiales reciclables.',
     contact: { tel: ['222 224 4905'] },
@@ -315,7 +308,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Calle 21 Sur 1103, Barrio de Santiago, Puebla, Pue.',
     distance: '--',
-    x: 210, y: 250,
+    lat: 19.0485386, lng: -98.2166069,
     icon: '🏫',
     details: 'PET, cartón, papel, vidrio, aluminio y envases de Tetra Pak. Campaña permanente de tapitas.',
     contact: { tel: ['222 229 9400'] },
@@ -329,7 +322,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Av. San Claudio y 18 Sur, Ciudad Universitaria, Col. San Manuel, Puebla, Pue.',
     distance: '--',
-    x: 300, y: 450,
+    lat: 18.9998493, lng: -98.1991511,
     icon: '🏫',
     details: 'Residuos electrónicos (cables, computadoras viejas, teclados, tarjetas madre, monitores, etc.).',
     contact: { tel: ['222 229 5500 Ext. 7400'] },
@@ -343,7 +336,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Av. 20 Oriente 1001, Centro. Puebla, Pue.',
     distance: '--',
-    x: 130, y: 200,
+    lat: 19.0481484, lng: -98.1878593,
     icon: '🏫',
     details: 'Papel, cartón, libros viejos, archivos muertos y PET.',
     contact: { tel: ['222 213 7700', '222 235 8786'] },
@@ -357,7 +350,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Calle 5 Poniente 1303, Centro, Puebla, Pue.',
     distance: '--',
-    x: 240, y: 110,
+    lat: 19.0451204, lng: -98.2047549,
     icon: '🏫',
     details: 'PET y Cartón. Cuentan con contenedores accesibles en sus instalaciones.',
     contact: { tel: ['222 211 6050'] },
@@ -371,7 +364,6 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Planteles 1, 2 y 3 en Puebla Capital.',
     distance: '--',
-    x: 330, y: 240,
     icon: '🏫',
     details: 'Latas de aluminio. Programa de recolección interna y comunitaria.',
     contact: { tel: ['222 211 4660'] },
@@ -385,7 +377,7 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'Av. Jesús Reyes Heroles S/N, Col. Nueva Antequera, Puebla, Pue.',
     distance: '--',
-    x: 90, y: 390,
+    lat: 19.0740307, lng: -98.2110685,
     icon: '🏫',
     details: 'Útiles escolares usados (cuadernos a medio usar, hojas, lápices), además de papel y cartón.',
     contact: { tel: ['222 229 6900'] },

@@ -21,11 +21,9 @@ import {
 } from 'ionicons/icons';
 import './Home.css';
 import { centersData, RecyclingCenter, SUB_FILTER_GROUPS, Categoria } from '../data/centersData';
+import RecyclingMapView from '../components/RecyclingMapView';
 
 const Home: React.FC = () => {
-
-  // User location node
-  const userLocation = { x: 150, y: 250 };
 
   // ── Estados ────────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'mapa' | 'lista'>('mapa');
@@ -33,12 +31,12 @@ const Home: React.FC = () => {
   const [activeSubFilter, setActiveSubFilter] = useState<string | null>(null);
   const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
-  const [showRoute, setShowRoute] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchBarOpen, setIsSearchBarOpen] = useState<boolean>(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [locationPulse, setLocationPulse] = useState<boolean>(false);
-  const [showNoLinkToast, setShowNoLinkToast] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
   // Sub-filtros disponibles para la categoría activa
   const currentSubFilters = SUB_FILTER_GROUPS[activeFilter as Categoria] ?? [];
@@ -46,26 +44,51 @@ const Home: React.FC = () => {
   // Resetear sub-filtro y cerrar panel cuando cambia el filtro principal
   useEffect(() => {
     setIsSheetOpen(false);
-    setShowRoute(false);
     setActiveSubFilter(null);
   }, [activeFilter]);
 
-  // Click on location button
+  // Click on location button — pide la ubicación real del navegador
   const handleLocateUser = () => {
+    if (!('geolocation' in navigator)) {
+      setToastMessage('Tu navegador no soporta geolocalización.');
+      return;
+    }
     setLocationPulse(true);
-    setTimeout(() => setLocationPulse(false), 2000);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserPosition({ lat: position.coords.latitude, lng: position.coords.longitude });
+        setTimeout(() => setLocationPulse(false), 2000);
+      },
+      () => {
+        setLocationPulse(false);
+        setToastMessage('No se pudo obtener tu ubicación. Revisa los permisos del navegador.');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   // Click on a pin
   const handleSelectCenter = (center: RecyclingCenter) => {
     setSelectedCenter(center);
     setIsSheetOpen(true);
-    setShowRoute(false);
   };
 
-  // Toggle route line
-  const handleToggleRoute = () => {
-    setShowRoute(!showRoute);
+  // Abre la ruta hacia el centro seleccionado en Google Maps: usa la ubicación
+  // real del usuario si ya la compartió, y si el centro no tiene coordenadas
+  // precisas cae a una búsqueda por nombre en vez de inventar una ubicación.
+  const handleGetDirections = () => {
+    if (!selectedCenter) return;
+    let url: string;
+    if (selectedCenter.lat != null && selectedCenter.lng != null) {
+      const destination = `${selectedCenter.lat},${selectedCenter.lng}`;
+      url = userPosition
+        ? `https://www.google.com/maps/dir/?api=1&origin=${userPosition.lat},${userPosition.lng}&destination=${destination}&travelmode=driving`
+        : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+    } else {
+      const query = encodeURIComponent(`${selectedCenter.name}, Puebla, México`);
+      url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Navigate to map and focus a center clicked from the List
@@ -73,7 +96,6 @@ const Home: React.FC = () => {
     setSelectedCenter(center);
     setActiveTab('mapa');
     setIsSheetOpen(true);
-    setShowRoute(false);
   };
 
   // Filtrado: categoría principal → sub-filtro → búsqueda libre
@@ -114,10 +136,7 @@ const Home: React.FC = () => {
             <div className="detail-panel-title">{selectedCenter.name}</div>
             <div className="detail-panel-subtitle">Punto de Acopio — {selectedCenter.materials.join(', ')}</div>
           </div>
-          <button className="close-panel-btn" onClick={() => {
-            setIsSheetOpen(false);
-            setShowRoute(false);
-          }}>
+          <button className="close-panel-btn" onClick={() => setIsSheetOpen(false)}>
             <IonIcon icon={closeOutline} />
           </button>
         </div>
@@ -180,10 +199,10 @@ const Home: React.FC = () => {
         <div className="panel-actions-wrapper">
           <button
             className="route-cta-btn route-cta-primary"
-            onClick={handleToggleRoute}
+            onClick={handleGetDirections}
           >
             <IonIcon icon={navigateOutline} />
-            <span>{showRoute ? 'Cancelar Ruta' : 'Trazar Ruta'}</span>
+            <span>Cómo llegar</span>
           </button>
           <button
             className="route-cta-btn route-cta-secondary"
@@ -193,7 +212,7 @@ const Home: React.FC = () => {
                 const targetUrl = link.startsWith('http') ? link : `https://${link}`;
                 window.open(targetUrl, '_blank', 'noopener,noreferrer');
               } else {
-                setShowNoLinkToast(true);
+                setToastMessage('Aún no se cuenta con un enlace de información para este sitio.');
               }
             }}
             style={{ opacity: link ? 1 : 0.6 }}
@@ -373,54 +392,14 @@ const Home: React.FC = () => {
                   {/* 1. MAP VIEW TAB (Visible on Mobile or Desktop) */}
                   <div className={`mobile-tab-view ${activeTab === 'mapa' ? 'active' : ''}`}>
                     <div className="map-canvas-container">
-                      
-                      {/* Responsive SVG Map canvas */}
-                      <svg className="svg-map-graphics" viewBox="0 0 390 550" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="390" height="550" className="map-bg" />
-                        <path d="M 0,80 Q 80,40 120,110 T 60,190 Z" className="map-forest" />
-                        <rect x="230" y="40" width="130" height="70" rx="12" className="map-forest" />
-                        <path d="M 260,340 Q 320,380 390,320 L 390,440 L 290,440 Z" className="map-forest" />
-                        <path d="M -20,410 Q 120,440 200,380 T 410,480 L 410,520 Q 280,430 200,430 T -20,470 Z" className="map-water" />
-                        <path d="M 0,160 L 390,160 M 0,300 L 390,300 M 0,440 L 390,440 M 150,0 Q 130,220 150,550 M 270,0 Q 290,280 270,550" className="map-road-network" />
-                        <path d="M -20,60 H 410 M -20,230 H 410" className="map-main-road" />
-                        
-                        {/* Glowing Route path */}
-                        {showRoute && selectedCenter && (
-                          <path 
-                            d={`M ${userLocation.x},${userLocation.y} 
-                                Q ${(userLocation.x + selectedCenter.x)/2 + 20},${(userLocation.y + selectedCenter.y)/2 - 30} 
-                                ${selectedCenter.x},${selectedCenter.y}`} 
-                            className="map-glow-path" 
-                          />
-                        )}
 
-                        {/* Responsive User Location Marker inside SVG */}
-                        <g 
-                          className={`user-marker-svg ${locationPulse ? 'pulsing' : ''}`}
-                          transform={`translate(${userLocation.x}, ${userLocation.y})`}
-                        >
-                          <circle r="18" className="user-pulse-ring-svg" />
-                          <circle r="6" fill="var(--color-accent)" stroke="#ffffff" strokeWidth="2" />
-                        </g>
-
-                        {/* Responsive Center Markers inside SVG */}
-                        {filteredCenters.map((center) => (
-                          <g 
-                            key={center.id}
-                            className={`map-pin-svg ${selectedCenter?.id === center.id ? 'active' : ''}`}
-                            transform={`translate(${center.x}, ${center.y})`}
-                            onClick={() => handleSelectCenter(center)}
-                          >
-                            <path 
-                              d="M 0,0 C -12,-16 -18,-24 -18,-36 C -18,-47 -9,-55 0,-55 C 9,-55 18,-47 18,-36 C 18,-24 12,-16 0,0 Z" 
-                              className="pin-bubble-svg" 
-                            />
-                            <text y="-32" textAnchor="middle" className="pin-text-svg">
-                              {center.icon}
-                            </text>
-                          </g>
-                        ))}
-                      </svg>
+                      <RecyclingMapView
+                        centers={filteredCenters}
+                        selectedCenter={selectedCenter}
+                        onSelectCenter={handleSelectCenter}
+                        userPosition={userPosition}
+                        activeTab={activeTab}
+                      />
 
                       {/* Floating locator action buttons */}
                       <div className={`floating-actions-container ${isSheetOpen && selectedCenter ? 'has-sheet' : ''}`}>
@@ -522,10 +501,10 @@ const Home: React.FC = () => {
             </aside>
 
             <IonToast
-              isOpen={showNoLinkToast}
-              onDidDismiss={() => setShowNoLinkToast(false)}
-              message="Aún no se cuenta con un enlace de información para este sitio."
-              duration={3000}
+              isOpen={toastMessage !== null}
+              onDidDismiss={() => setToastMessage(null)}
+              message={toastMessage ?? ''}
+              duration={3500}
               position="bottom"
               style={{ '--background': 'var(--bg-tertiary)', '--color': 'var(--text-primary)' }}
             />
