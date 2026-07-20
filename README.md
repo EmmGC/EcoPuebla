@@ -10,6 +10,7 @@ El proyecto está diseñado de forma responsiva (mobile-first), simulando la exp
 
 - **Framework principal**: React
 - **Componentes de interfaz**: [Ionic React](https://ionicframework.com/docs/react) (para un comportamiento responsivo y táctil nativo).
+- **Mapa**: [Leaflet](https://leafletjs.com/) + [react-leaflet](https://react-leaflet.js.org/) con tiles de OpenStreetMap/CARTO (100% gratis, sin API key). Geolocalización real vía la Geolocation API del navegador. El botón "Cómo llegar" abre la ruta calculada en Google Maps (deep link, sin motor de rutas propio).
 - **Tipado y robustez**: TypeScript
 - **Compilador y servidor dev**: Vite
 - **Estilos**: Vanilla CSS con variables personalizadas y un diseño moderno estilo Dark Mode.
@@ -76,8 +77,8 @@ Añadir o actualizar información es sumamente sencillo. Abre el archivo `src/da
   hours: 'Lun a Vie 9:00 - 18:00',
   address: 'Dirección completa, Puebla, Pue.',
   distance: '--',
-  x: 200, // Coordenada X simulada para el mapa actual (0 a 390)
-  y: 350, // Coordenada Y simulada para el mapa actual (0 a 550)
+  lat: 19.0414, // Latitud real (opcional, ver nota abajo)
+  lng: -98.2063, // Longitud real (opcional, ver nota abajo)
   icon: '🌿', // Emoji descriptivo
   contact: {
     whatsapp: '2221234567', // Opcional
@@ -88,4 +89,11 @@ Añadir o actualizar información es sumamente sencillo. Abre el archivo `src/da
   link: 'https://tusitio.com' // Opcional (si no tiene, se mostrará como "Sin enlace")
 }
 ```
+
+### Sobre `lat` / `lng`
+
+El mapa usa [Leaflet](https://leafletjs.com/) con coordenadas reales (WGS84), no posiciones simuladas.
+- Si conoces la dirección exacta, obtén `lat`/`lng` gratis en [Nominatim](https://nominatim.openstreetmap.org/ui/search.html) (buscador de OpenStreetMap) o haciendo clic derecho en Google Maps → "¿Qué hay aquí?".
+- Si **no** conoces una ubicación precisa (recolección a domicilio, "consultar", múltiples sucursales), deja `lat`/`lng` sin definir. El centro seguirá apareciendo en la lista y el botón "Cómo llegar" hará una búsqueda por nombre en Google Maps en vez de trazar una ruta con coordenadas inventadas — es preferible eso a mostrar un pin en el lugar equivocado.
+
 Una vez guardes y empujes los cambios en tu repo remoto, Netlify se encargará del resto de manera transparente.
