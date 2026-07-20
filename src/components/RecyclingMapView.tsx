@@ -98,13 +98,21 @@ function MapController({ centers, selectedCenter, userPosition }: {
 
   useEffect(() => {
     if (selectedCenter?.lat != null && selectedCenter?.lng != null) {
-      safeFlyTo(map, [selectedCenter.lat, selectedCenter.lng], 15);
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+        safeFlyTo(map, [selectedCenter.lat!, selectedCenter.lng!], 15);
+      }, 150);
+      return () => clearTimeout(timer);
     }
   }, [selectedCenter, map]);
 
   useEffect(() => {
     if (userPosition) {
-      safeFlyTo(map, [userPosition.lat, userPosition.lng], 14);
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+        safeFlyTo(map, [userPosition.lat, userPosition.lng], 14);
+      }, 150);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPosition]);

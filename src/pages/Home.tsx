@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { IonPage, IonContent, IonIcon, IonToast } from '@ionic/react';
 import {
   menuOutline,
@@ -39,6 +39,23 @@ const Home: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
 
+  const [sheetTranslateY, setSheetTranslateY] = useState<number>(0);
+  const touchStartY = useRef<number>(0);
+  const isDragging = useRef<boolean>(false);
+
+  // Calcula la distancia en kilómetros usando la fórmula de Haversine
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
   // Sub-filtros disponibles para la categoría activa
   const currentSubFilters = SUB_FILTER_GROUPS[activeFilter as Categoria] ?? [];
 
@@ -47,6 +64,59 @@ const Home: React.FC = () => {
     setIsSheetOpen(false);
     setActiveSubFilter(null);
   }, [activeFilter]);
+
+  // Intentar obtener la ubicación del usuario de manera silenciosa al iniciar la app
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserPosition({ lat: position.coords.latitude, lng: position.coords.longitude });
+        },
+        (error) => {
+          console.log('Geolocalización silenciosa al iniciar omitida:', error.message);
+        },
+        { enableHighAccuracy: false, timeout: 5000 }
+      );
+    }
+  }, []);
+
+  // Control de gestos táctiles para deslizar y cerrar el panel de detalles en móvil
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.drag-handle-bar') || target.closest('.detail-panel-header')) {
+      touchStartY.current = e.touches[0].clientY;
+      isDragging.current = true;
+      const sheet = document.querySelector('.detail-panel-sheet') as HTMLElement;
+      if (sheet) {
+        sheet.style.transition = 'none';
+      }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging.current) return;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    if (deltaY > 0) {
+      setSheetTranslateY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    
+    const sheet = document.querySelector('.detail-panel-sheet') as HTMLElement;
+    if (sheet) {
+      sheet.style.transition = '';
+    }
+
+    if (sheetTranslateY > 90) {
+      setIsSheetOpen(false);
+    }
+    setSheetTranslateY(0);
+  };
+
+  const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
   // Click on location button — pide la ubicación real del navegador
   const handleLocateUser = () => {
@@ -126,6 +196,26 @@ const Home: React.FC = () => {
     return matchesCategory && matchesSubFilter && matchesSearch;
   });
 
+  // Ordenar los centros por distancia si se tiene la ubicación del usuario
+  const sortedAndFilteredCenters = React.useMemo(() => {
+    const list = [...filteredCenters];
+    if (userPosition) {
+      list.sort((a, b) => {
+        const hasA = a.lat != null && a.lng != null;
+        const hasB = b.lat != null && b.lng != null;
+
+        if (hasA && !hasB) return -1;
+        if (!hasA && hasB) return 1;
+        if (!hasA && !hasB) return 0;
+
+        const distA = calculateDistance(userPosition.lat, userPosition.lng, a.lat!, a.lng!);
+        const distB = calculateDistance(userPosition.lat, userPosition.lng, b.lat!, b.lng!);
+        return distA - distB;
+      });
+    }
+    return list;
+  }, [filteredCenters, userPosition]);
+
   // Helper renderer: Center details card (used on both Mobile Sheet and Desktop Overlay)
   const renderDetailPanelContent = () => {
     if (!selectedCenter) return null;
@@ -145,7 +235,17 @@ const Home: React.FC = () => {
         {/* Dirección */}
         <div className="panel-row-info">
           <IonIcon icon={locationOutline} className="panel-row-icon" />
-          <span>{selectedCenter.address}</span>
+          <span>
+            {selectedCenter.address}
+            {userPosition && selectedCenter.lat != null && selectedCenter.lng != null && (
+              <strong style={{ marginLeft: '6px', color: 'var(--color-accent)' }}>
+                ({(() => {
+                  const dist = calculateDistance(userPosition.lat, userPosition.lng, selectedCenter.lat, selectedCenter.lng);
+                  return dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
+                })()})
+              </strong>
+            )}
+          </span>
         </div>
 
         {/* Qué reciben */}
@@ -228,6 +328,13 @@ const Home: React.FC = () => {
 
   // Helper renderer: Center list cards
   const renderCenterCard = (center: RecyclingCenter) => {
+    // Calcular distancia real si disponemos de ubicación
+    let distanceStr = '--';
+    if (userPosition && center.lat != null && center.lng != null) {
+      const dist = calculateDistance(userPosition.lat, userPosition.lng, center.lat, center.lng);
+      distanceStr = dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`;
+    }
+
     return (
       <div 
         key={center.id}
@@ -236,7 +343,7 @@ const Home: React.FC = () => {
       >
         <div className="card-title-row">
           <div className="card-title">{center.name}</div>
-          <div className="card-distance">{center.distance}</div>
+          <div className="card-distance">{distanceStr}</div>
         </div>
         <div className="card-address">{center.address}</div>
         
@@ -373,11 +480,11 @@ const Home: React.FC = () => {
 
                 <div className="list-scroll-area no-scrollbar">
                   <div className="materials-section-title" style={{ padding: '0 4px 4px' }}>
-                    Centros de Reciclaje ({filteredCenters.length})
+                    Centros de Reciclaje ({sortedAndFilteredCenters.length})
                   </div>
                   
-                  {filteredCenters.length > 0 ? (
-                    filteredCenters.map((center) => renderCenterCard(center))
+                  {sortedAndFilteredCenters.length > 0 ? (
+                    sortedAndFilteredCenters.map((center) => renderCenterCard(center))
                   ) : (
                     <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                       No se encontraron centros coincidentes.
@@ -396,7 +503,7 @@ const Home: React.FC = () => {
 
                       <MapErrorBoundary>
                         <RecyclingMapView
-                          centers={filteredCenters}
+                          centers={sortedAndFilteredCenters}
                           selectedCenter={selectedCenter}
                           onSelectCenter={handleSelectCenter}
                           userPosition={userPosition}
@@ -411,7 +518,17 @@ const Home: React.FC = () => {
                       </div>
 
                       {/* Detail Panel Card (Slides up on Mobile, floats on Desktop Map) */}
-                      <div className={`detail-panel-sheet ${isSheetOpen && selectedCenter ? 'visible' : ''}`}>
+                      <div 
+                        className={`detail-panel-sheet ${isSheetOpen && selectedCenter ? 'visible' : ''}`}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        style={
+                          isSheetOpen && selectedCenter && sheetTranslateY > 0 && isMobile()
+                            ? { transform: `translateY(${sheetTranslateY}px)` }
+                            : undefined
+                        }
+                      >
                         <div className="drag-handle-bar" onClick={() => setIsSheetOpen(false)}></div>
                         {renderDetailPanelContent()}
                       </div>
@@ -436,8 +553,8 @@ const Home: React.FC = () => {
                       </div>
 
                       <div className="list-scroll-area no-scrollbar">
-                        {filteredCenters.length > 0 ? (
-                          filteredCenters.map((center) => renderCenterCard(center))
+                        {sortedAndFilteredCenters.length > 0 ? (
+                          sortedAndFilteredCenters.map((center) => renderCenterCard(center))
                         ) : (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 10px', color: 'var(--text-secondary)' }}>
                             <IonIcon icon={alertCircleOutline} style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--text-muted)' }} />
