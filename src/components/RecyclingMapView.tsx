@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './RecyclingMapView.css';
-import { RecyclingCenter } from '../data/centersData';
+import { RecyclingCenter, Taller, isTaller } from '../data/centersData';
 
 // Puebla capital, usado como centro inicial antes de encuadrar los pines reales
 const PUEBLA_CENTER: [number, number] = [19.0414, -98.2063];
@@ -15,8 +15,8 @@ interface UserPosition {
 
 interface RecyclingMapViewProps {
   centers: RecyclingCenter[];
-  selectedCenter: RecyclingCenter | null;
-  onSelectCenter: (center: RecyclingCenter) => void;
+  selectedCenter: RecyclingCenter | Taller | null;
+  onSelectCenter: (center: RecyclingCenter | Taller) => void;
   userPosition: UserPosition | null;
 }
 
@@ -58,7 +58,7 @@ function safeFlyTo(map: L.Map, latlng: [number, number], minZoom: number) {
 // Encuadra el mapa una sola vez al montar, y sigue al centro seleccionado o al usuario después
 function MapController({ centers, selectedCenter, userPosition }: {
   centers: RecyclingCenter[];
-  selectedCenter: RecyclingCenter | null;
+  selectedCenter: RecyclingCenter | Taller | null;
   userPosition: UserPosition | null;
 }) {
   const map = useMap();
@@ -136,7 +136,7 @@ const RecyclingMapView: React.FC<RecyclingMapViewProps> = ({ centers, selectedCe
         <Marker
           key={center.id}
           position={[center.lat as number, center.lng as number]}
-          icon={makePinIcon(center.icon, selectedCenter?.id === center.id)}
+          icon={makePinIcon(center.icon, selectedCenter !== null && !isTaller(selectedCenter) && selectedCenter.id === center.id)}
           eventHandlers={{ click: () => onSelectCenter(center) }}
         />
       ))}

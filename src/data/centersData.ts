@@ -6,7 +6,8 @@ export type Categoria =
   | 'Medicamentos'
   | 'Ropa'
   | 'Electrónicos'
-  | 'Escuelas';
+  | 'Escuelas'
+  | 'Talleres';
 
 export interface RecyclingCenter {
   id: number;
@@ -30,6 +31,21 @@ export interface RecyclingCenter {
   link?: string;
   isMultipleSites?: boolean;
   isHomePickup?: boolean;
+}
+
+/** Los talleres/pláticas son programas educativos, no puntos de acopio físicos,
+ *  por eso tienen su propia interfaz en vez de forzarlos dentro de RecyclingCenter. */
+export interface Taller {
+  id: number;
+  nombre: string;
+  institucion: string;
+  escuelasDondeAplica: string;
+  ubicacionDependencia: string;
+  lat?: number;
+  lng?: number;
+  tel: string[];
+  link?: string;
+  icon: string;
 }
 
 // ─── Sub-filtros por categoría ─────────────────────────────────────────────────
@@ -109,8 +125,24 @@ export const centersData: RecyclingCenter[] = [
     distance: '--',
     icon: '🌿',
     details: 'Empresa que recoge a domicilio residuos orgánicos en botes que ellos proporcionan para regresarlos en tierra. (Se paga el servicio)',
-    contact: {},
+    contact: { whatsapp: '221 657 6754' },
+    link: 'https://www.organicpuebla.com/',
     isHomePickup: true,
+  },
+  {
+    id: 4,
+    name: 'Green Carson',
+    categoria: 'Orgánicos',
+    materials: ['Residuos orgánicos'],
+    hours: 'Consultar',
+    address: 'Recolección a domicilio',
+    distance: '--',
+    icon: '🌿',
+    details: 'Empresa que recoge a domicilio residuos orgánicos en botes que ellos proporcionan para regresarlos en tierra. (Se paga el servicio)',
+    contact: { tel: ['8119667900'] },
+    isHomePickup: true,
+    // Sin link propio confirmado: el PDF cita pasa.mx como referencia de otra
+    // empresa (PASA) al hablar de Green Carson, no como su sitio oficial.
   },
 
   // ── ACEITE ────────────────────────────────────────────────────────────────
@@ -195,25 +227,51 @@ export const centersData: RecyclingCenter[] = [
     distance: '--',
     lat: 19.120012513598862, lng: -98.23952072698653,
     icon: '💊',
-    details: 'Medicamentos caducos mediante contenedores de SINGREM instalados en sucursales participantes.',
-    contact: {},
+    details: 'Medicamentos caducos mediante contenedores de SINGREM instalados en sucursales participantes. Farmacias del Ahorro: 800 711 2222. Farmacias Guadalajara: 800 220 2020. Farmacias YZA: consultar sitio web (yza.mx/sostenibilidad.html).',
+    contact: { tel: ['800 711 2222', '800 220 2020'] },
+    link: 'https://www.fahorro.com/',
     isMultipleSites: true,
+  },
+  {
+    id: 11,
+    name: 'Fundación Cáritas Puebla (Medicamentos)',
+    categoria: 'Medicamentos',
+    materials: ['Medicamentos no usados o caducados (etiquetados)'],
+    hours: 'Consultar',
+    address: 'Consultar',
+    distance: '--',
+    icon: '💊',
+    details: 'Pueden recibir medicamentos que no se ocupen o caducados. En caso de medicamentos caducados, etiquetarlos para señalar su condición.',
+    contact: { tel: ['222 211 7330'] },
+    link: 'https://www.caritaspuebla.org/',
   },
 
   // ── ROPA ──────────────────────────────────────────────────────────────────
   {
-    id: 13,
-    name: 'Asilo Particular de Caridad / Cáritas Puebla',
+    id: 12,
+    name: 'Asilo Particular de Caridad para Ancianos San José María de Yermo y Parres',
     categoria: 'Ropa',
-    materials: ['Ropa', 'Zapatos', 'Cobijas', 'Pañales para adulto', 'Artículos de higiene', 'Alimentos', 'Juguetes'],
+    materials: ['Ropa', 'Cobijas', 'Pañales para adulto', 'Artículos de higiene', 'Alimentos'],
     hours: 'Consultar (Llamar antes)',
     address: 'Consultar',
     distance: '--',
     icon: '👕',
-    details: 'Ropa para adultos mayores, cobijas, pañales para adulto, artículos de higiene, alimentos, zapatos y juguetes.',
-    contact: { tel: ['222 242 2034', '222 211 7330'] },
+    details: 'Ropa para adultos mayores (limpia y en buen estado), cobijas, pañales para adulto, artículos de higiene, alimentos y donativos económicos. Conviene llamar antes para confirmar necesidades.',
+    contact: { tel: ['222 242 2034'] },
+    link: 'https://asilodecaridad.org/html/galeria_01.html',
+  },
+  {
+    id: 13,
+    name: 'Fundación Cáritas Puebla (Ropa)',
+    categoria: 'Ropa',
+    materials: ['Ropa', 'Zapatos', 'Cobijas', 'Juguetes', 'Alimentos'],
+    hours: 'Consultar',
+    address: 'Consultar',
+    distance: '--',
+    icon: '👕',
+    details: 'Ropa, zapatos, cobijas, juguetes, alimentos no perecederos y otros artículos para personas en situación vulnerable.',
+    contact: { tel: ['222 211 7330'] },
     link: 'https://www.caritaspuebla.org/',
-    isMultipleSites: true,
   },
   {
     id: 14,
@@ -239,7 +297,7 @@ export const centersData: RecyclingCenter[] = [
     distance: '--',
     lat: 19.038464439451268, lng: -98.24316298465769,
     icon: '👕',
-    details: 'Ropa en buen estado para apoyar a niñas, niños y adolescentes con cáncer y sus familias.',
+    details: 'Ropa en buen estado para apoyar a niñas, niños y adolescentes con cáncer y sus familias; también aceptan otros donativos según sus campañas.',
     contact: { tel: ['222 242 2672'] },
     link: 'https://www.amancpuebla.org/',
   },
@@ -251,20 +309,47 @@ export const centersData: RecyclingCenter[] = [
     hours: 'Consultar',
     address: 'C. de La Niñez 1007, Reserva Territorial Atlixcáyotl, Concepción la Cruz, 72197 San Bernardino Tlaxcalancingo, Pue.',
     distance: '--',
-    icon: '👕',
     lat: 19.03469506419997, lng: -98.24593291349328,
-    details: 'Ropa, zapatos, cobijas y artículos para bazares solidarios.',
+    icon: '👕',
+    details: 'Ropa, zapatos, cobijas y artículos para bazares solidarios que benefician a familias de pacientes hospitalizados.',
     contact: { tel: ['222 295 18522'] },
     link: 'https://www.donadoresaltruistas.org/',
   },
 
   // ── ELECTRÓNICOS ──────────────────────────────────────────────────────────
   {
+    id: 17,
+    name: 'Salva al mar (UPAEP)',
+    categoria: 'Electrónicos',
+    materials: ['Electrónicos en buen uso', 'Electrónicos inservibles'],
+    hours: 'Dos veces al año (consultar fechas)',
+    address: 'UPAEP, Puebla',
+    distance: '--',
+    icon: '💻',
+    details: 'Campaña dos veces al año para recolección de electrónicos en buen uso e inservibles.',
+    contact: { tel: ['222 193 8697'] },
+    link: 'https://www.facebook.com/salvaalmar/',
+  },
+  {
+    id: 18,
+    name: 'Secretaría de Medio Ambiente (SMADSOT) — Puntos Verdes',
+    categoria: 'Electrónicos',
+    materials: ['Electrónicos', 'Reciclables varios'],
+    hours: 'Consultar (jornadas: Reciclatón, Flextival)',
+    address: 'Puntos Verdes en la zona Metropolitana',
+    distance: '--',
+    icon: '💻',
+    details: 'Organiza jornadas constantes en la zona Metropolitana. Consulta ubicación de "Puntos Verdes" y eventos como Reciclatón y Flextival en su cuenta oficial.',
+    contact: {},
+    link: 'https://smadsot.puebla.gob.mx/residuos',
+    isMultipleSites: true,
+  },
+  {
     id: 19,
     name: 'Recicla Electrónica (RECIELEC)',
     categoria: 'Electrónicos',
     materials: ['Computadoras', 'Laptops', 'Celulares', 'Impresoras', 'Cables', 'Módems', 'Teclados', 'Monitores', 'Residuos electrónicos'],
-    hours: 'lunes, 9 a.m.–6 p.m.',
+    hours: 'lunes, 9 a.m.–6 p.m.',
     address: 'Primero de Mayo 5, Villa Guadalupe, 72229 Heroica Puebla de Zaragoza, Pue.',
     distance: '--',
     lat: 19.069275511451977, lng: -98.12407565767116,
@@ -283,7 +368,7 @@ export const centersData: RecyclingCenter[] = [
     distance: '--',
     lat: 19.08647801225997, lng: -98.15691778280862,
     icon: '💻',
-    details: 'Equipos electrónicos, metales, chatarra and residuos reciclables.',
+    details: 'Equipos electrónicos, metales, chatarra y residuos reciclables.',
     contact: { tel: ['222 271 3022'] },
     link: 'https://reciclamexico.com.mx/centros-de-reciclaje/recicla-electronica-recielec/',
   },
@@ -309,7 +394,7 @@ export const centersData: RecyclingCenter[] = [
     address: 'Consultar',
     distance: '--',
     icon: '💻',
-    details: 'Electrónicos, metales y otros materiales reciclables.',
+    details: 'Electrónicos, metales y otros materiales reciclables (conviene llamar para confirmar el tipo de equipo).',
     contact: { tel: ['222 224 4905'] },
     link: 'https://reciclamexico.com.mx/centros-de-reciclaje/recicla-electronica-recielec/',
     isMultipleSites: true,
@@ -350,7 +435,7 @@ export const centersData: RecyclingCenter[] = [
     categoria: 'Escuelas',
     materials: ['Papel', 'Cartón', 'Libros viejos', 'Archivos muertos', 'PET'],
     hours: 'Consultar',
-    address: 'Av. 20 Oriente 1001, Centro. Puebla, Pue.',
+    address: 'Av. 20 Oriente 1001, Centro, Puebla, Pue.',
     distance: '--',
     lat: 19.0481484, lng: -98.1878593,
     icon: '🏫',
@@ -400,4 +485,78 @@ export const centersData: RecyclingCenter[] = [
     contact: { tel: ['222 229 6900'] },
     link: 'https://sep.puebla.gob.mx',
   },
+  {
+    id: 29,
+    name: 'Reciclim',
+    categoria: 'Escuelas',
+    materials: ['PET', 'Cartón', 'Metales', 'Envases de Tetra Pak'],
+    hours: 'Consultar',
+    address: 'Calle 48 norte N°1824, Joaquín Colombres, Puebla, Pue.',
+    distance: '--',
+    icon: '🏫',
+    details: 'Reciben PET, cartón, metales y Tetra Pak.',
+    contact: {},
+    link: 'https://www.facebook.com/ecolanamx/videos/1022879786585978/',
+  },
 ];
+
+// ─── Talleres / Pláticas / Cursos ───────────────────────────────────────────
+
+export const talleresData: Taller[] = [
+  {
+    id: 1,
+    nombre: 'Talleres de Reciclado y Aprovechamiento de Residuos Sólidos Urbanos (RSU)',
+    institucion: 'Organismo Operador del Servicio de Limpia del Municipio de Puebla (OOSLMP)',
+    escuelasDondeAplica: 'Escuelas de educación básica y media, como la Primaria Rafael Molina Betancourt, Primaria Gonzalo Bautista Castillo y Bachillerato Guillermo Haro.',
+    ubicacionDependencia: 'Blvd. Capitán Carlos Camacho Espíritu 237, Zona Sin Asignación de Nombre de Col 49, Bugambilias, 72580 Heroica Puebla de Zaragoza, Pue.',
+    tel: ['222 573 9273'],
+    link: 'https://pueblacapital.gob.mx',
+    icon: '📋',
+  },
+  {
+    id: 2,
+    nombre: 'Manejo Integral de Residuos y Consumo Responsable',
+    institucion: 'Secretaría de Medio Ambiente, Desarrollo Sustentable y Ordenamiento Territorial (SMADSOT)',
+    escuelasDondeAplica: 'Dirigido a estudiantes de nivel básico (kínder, primaria, secundaria) y nivel superior de la capital.',
+    ubicacionDependencia: 'Calle Lateral Recta Cholula Km. 5.5 No.2401, 72805 San Andrés Cholula, Pue.',
+    tel: ['222 273 6800'],
+    link: 'https://smadsot.puebla.gob.mx',
+    icon: '📋',
+  },
+  {
+    id: 3,
+    nombre: 'Capacitación de Manejo Integral, Caracterización de Residuos y Regla de las 7Rs',
+    institucion: 'Secretaría de Medio Ambiente y Recursos Naturales (SEMARNAT) / Convenio Río Atoyac',
+    escuelasDondeAplica: 'Escuelas Secundarias Generales de la capital, como la Secundaria General No. 13 "Ignacio Manuel Altamirano".',
+    ubicacionDependencia: 'Calle 3 Poniente 2926, Col. La Paz, Puebla, Pue.',
+    tel: ['222 249 7622'],
+    link: 'https://gob.mx/semarnat',
+    icon: '📋',
+  },
+  {
+    id: 4,
+    nombre: 'Estrategia de Reciclaje Sustentable (Convenio FlexSportA)',
+    institucion: 'Colegio de Bachilleres del Estado de Puebla (COBAEP)',
+    escuelasDondeAplica: 'Aplicado internamente en los planteles de Puebla Capital (Plantel 1 San Jerónimo, Plantel 2 Amalucan, Plantel 3, etc.).',
+    ubicacionDependencia: 'Av. 11 Poniente 1104, Col. Centro, Puebla, Pue.',
+    tel: ['222 211 4660'],
+    link: 'https://cobaep.edu.mx',
+    icon: '📋',
+  },
+];
+
+// ─── Cómo solicitar pláticas para una escuela (texto de referencia del PDF) ─
+export const comoSolicitarPlaticas = [
+  {
+    via: 'OOSLMP (Municipio de Puebla)',
+    descripcion: 'Cualquier director de escuela o comité de padres de familia de Puebla Capital puede meter un oficio formal dirigido al Organismo de Limpia solicitando los "Talleres de Reciclado en Escuelas". Ellos agendan la fecha y asisten con material lúdico para los niños sin costo.',
+  },
+  {
+    via: 'SMADSOT (Gobierno del Estado)',
+    descripcion: 'A través de la Dirección de Educación Ambiental, la secretaría estatal cuenta con un catálogo permanente de pláticas (enfocadas en separación, biofiltros y consumo sustentable) que se solicitan mediante oficio institucional.',
+  },
+];
+
+export function isTaller(item: unknown): item is Taller {
+  return !!item && typeof item === 'object' && 'escuelasDondeAplica' in item;
+}

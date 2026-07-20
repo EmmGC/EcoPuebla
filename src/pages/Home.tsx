@@ -8,10 +8,8 @@ import {
   listOutline,
   closeOutline,
   navigateOutline,
-  star,
   leafOutline,
   chevronForwardOutline,
-  timeOutline,
   locationOutline,
   alertCircleOutline,
   callOutline,
@@ -20,7 +18,7 @@ import {
   linkOutline
 } from 'ionicons/icons';
 import './Home.css';
-import { centersData, RecyclingCenter, SUB_FILTER_GROUPS, Categoria } from '../data/centersData';
+import { centersData, RecyclingCenter, SUB_FILTER_GROUPS, Categoria, talleresData, Taller, comoSolicitarPlaticas, isTaller } from '../data/centersData';
 import RecyclingMapView from '../components/RecyclingMapView';
 import MapErrorBoundary from '../components/MapErrorBoundary';
 
@@ -30,7 +28,7 @@ const Home: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'mapa' | 'lista'>('mapa');
   const [activeFilter, setActiveFilter] = useState<string>('Todos');
   const [activeSubFilter, setActiveSubFilter] = useState<string | null>(null);
-  const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | null>(null);
+  const [selectedCenter, setSelectedCenter] = useState<RecyclingCenter | Taller | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchBarOpen, setIsSearchBarOpen] = useState<boolean>(false);
@@ -139,7 +137,7 @@ const Home: React.FC = () => {
   };
 
   // Click on a pin
-  const handleSelectCenter = (center: RecyclingCenter) => {
+  const handleSelectCenter = (center: RecyclingCenter | Taller) => {
     setSelectedCenter(center);
     setIsSheetOpen(true);
   };
@@ -149,17 +147,31 @@ const Home: React.FC = () => {
   // precisas cae a una búsqueda por nombre en vez de inventar una ubicación.
   const handleGetDirections = () => {
     if (!selectedCenter) return;
-    const isVirtualAddress = selectedCenter.address.toLowerCase().includes('consultar') || selectedCenter.address.toLowerCase().includes('recolección');
-    const queryTerm = isVirtualAddress
-      ? `${selectedCenter.name}, Puebla, México`
-      : `${selectedCenter.name}, ${selectedCenter.address}, Puebla, México`;
+    let queryTerm = '';
+    
+    if (isTaller(selectedCenter) || ('ubicacionDependencia' in selectedCenter)) {
+      const taller = selectedCenter as Taller;
+      if (taller.id === 1) {
+        queryTerm = `ORGANISMO OPERADOR DEL SERVICIO DE LIMPIA, ${taller.ubicacionDependencia}`;
+      } else if (taller.id === 2) {
+        queryTerm = `Secretaría de Medio Ambiente, Desarrollo Sustentable y Ordenamiento Territorial., ${taller.ubicacionDependencia}`;
+      } else {
+        queryTerm = `${taller.institucion}, ${taller.ubicacionDependencia}`;
+      }
+    } else {
+      const isVirtualAddress = selectedCenter.address.toLowerCase().includes('consultar') || selectedCenter.address.toLowerCase().includes('recolección');
+      queryTerm = isVirtualAddress
+        ? `${selectedCenter.name}, Puebla, México`
+        : `${selectedCenter.name}, ${selectedCenter.address}, Puebla, México`;
+    }
+    
     const query = encodeURIComponent(queryTerm);
     const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Navigate to map and focus a center clicked from the List
-  const handleViewCenterOnMap = (center: RecyclingCenter) => {
+  const handleViewCenterOnMap = (center: RecyclingCenter | Taller) => {
     setSelectedCenter(center);
     setActiveTab('mapa');
     setIsSheetOpen(true);
@@ -212,9 +224,97 @@ const Home: React.FC = () => {
     return list;
   }, [filteredCenters, userPosition]);
 
-  // Helper renderer: Center details card (used on both Mobile Sheet and Desktop Overlay)
+  // Filtrado específico para talleres
+  const filteredTalleres = React.useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return talleresData.filter(taller => {
+      return q === '' ||
+        taller.nombre.toLowerCase().includes(q) ||
+        taller.institucion.toLowerCase().includes(q) ||
+        taller.escuelasDondeAplica.toLowerCase().includes(q) ||
+        taller.ubicacionDependencia.toLowerCase().includes(q);
+    });
+  }, [searchQuery]);
+
+  // Helper renderer: Center/Taller details card (used on both Mobile Sheet and Desktop Overlay)
   const renderDetailPanelContent = () => {
     if (!selectedCenter) return null;
+
+    if (isTaller(selectedCenter)) {
+      const { tel, link, nombre, institucion, escuelasDondeAplica, ubicacionDependencia } = selectedCenter;
+      return (
+        <div className="detail-panel-sheet-content">
+          <div className="detail-panel-header">
+            <div>
+              <div className="detail-panel-title">{nombre}</div>
+              <div className="detail-panel-subtitle">📋 Taller o Plática Escolar</div>
+              <div className="badges-container">
+                <span className="badge-taller-tag">🏫 {institucion}</span>
+              </div>
+            </div>
+            <button className="close-panel-btn" onClick={() => setIsSheetOpen(false)}>
+              <IonIcon icon={closeOutline} />
+            </button>
+          </div>
+
+          {/* Ubicación de la dependencia */}
+          {ubicacionDependencia && (
+            <div className="panel-row-info">
+              <IonIcon icon={locationOutline} className="panel-row-icon" />
+              <span>{ubicacionDependencia}</span>
+            </div>
+          )}
+
+          {/* Dónde aplica */}
+          <div className="panel-row-info" style={{ alignItems: 'flex-start' }}>
+            <IonIcon icon={alertCircleOutline} className="panel-row-icon" style={{ marginTop: '2px' }} />
+            <span style={{ fontSize: '12.5px', lineHeight: '1.5', color: 'var(--text-secondary)' }}>
+              <strong>Aplica en: </strong> {escuelasDondeAplica}
+            </span>
+          </div>
+
+          {/* Contacto */}
+          {tel && tel.length > 0 && (
+            <div style={{ marginTop: '12px' }}>
+              <div className="materials-section-title">Teléfonos de Contacto:</div>
+              {tel.map((t) => (
+                <div className="panel-row-info" key={t}>
+                  <IonIcon icon={callOutline} className="panel-row-icon" />
+                  <span>{t}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Acciones */}
+          <div className="panel-actions-wrapper">
+            <button
+              className="route-cta-btn route-cta-primary"
+              onClick={handleGetDirections}
+            >
+              <IonIcon icon={navigateOutline} />
+              <span>Cómo llegar</span>
+            </button>
+            <button
+              className="route-cta-btn route-cta-secondary"
+              onClick={() => {
+                if (link) {
+                  const targetUrl = link.startsWith('http') ? link : `https://${link}`;
+                  window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                } else {
+                  setToastMessage('Aún no se cuenta con un enlace de información para este taller.');
+                }
+              }}
+              style={{ opacity: link ? 1 : 0.6 }}
+            >
+              <IonIcon icon={linkOutline} />
+              <span>{link ? 'Más info' : 'Sin enlace'}</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     const { contact, link, details } = selectedCenter;
     return (
       <div className="detail-panel-sheet-content">
@@ -385,6 +485,63 @@ const Home: React.FC = () => {
     );
   };
 
+  // Helper renderer: Taller list cards
+  const renderTallerCard = (taller: Taller) => {
+    return (
+      <div 
+        key={`taller-${taller.id}`}
+        className="center-list-card taller-list-card"
+        onClick={() => handleViewCenterOnMap(taller)}
+      >
+        <div className="card-title-row">
+          <div className="card-title">{taller.nombre}</div>
+          <span className="badge-taller-tag">📋 Taller</span>
+        </div>
+        <div className="card-institution">🏫 {taller.institucion}</div>
+        <div className="card-detail-text">
+          <strong>Aplica en:</strong> {taller.escuelasDondeAplica}
+        </div>
+        
+        {taller.ubicacionDependencia && (
+          <div className="card-address" style={{ marginTop: '8px' }}>
+            📍 {taller.ubicacionDependencia}
+          </div>
+        )}
+
+        <div className="card-meta-row">
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {taller.tel && taller.tel.length > 0 && (
+              <span className="card-taller-meta-action">📞 {taller.tel[0]}</span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '11px', color: 'var(--color-accent)' }}>
+            <span>Ver detalles</span>
+            <IonIcon icon={chevronForwardOutline} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Helper renderer: Solicitud de pláticas information box
+  const renderComoSolicitarBlock = () => {
+    return (
+      <div className="solicitar-platicas-banner">
+        <div className="solicitar-platicas-title">
+          🎓 ¿Cómo solicitar pláticas de reciclaje para tu escuela?
+        </div>
+        <div className="solicitar-platicas-content">
+          {comoSolicitarPlaticas.map((item, idx) => (
+            <div key={idx} className="solicitar-item">
+              <div className="solicitar-via">🔹 {item.via}</div>
+              <div className="solicitar-desc">{item.descripcion}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <IonPage>
       <IonContent fullscreen scrollY={false} className="ion-no-padding">
@@ -433,6 +590,7 @@ const Home: React.FC = () => {
                   { label: 'Ropa', icon: '👕' },
                   { label: 'Electrónicos', icon: '💻' },
                   { label: 'Escuelas', icon: '🏫' },
+                  { label: 'Talleres', icon: '📋' },
                 ].map((cat) => (
                   <button
                     key={cat.label}
@@ -489,15 +647,28 @@ const Home: React.FC = () => {
 
                 <div className="list-scroll-area no-scrollbar">
                   <div className="materials-section-title" style={{ padding: '0 4px 4px' }}>
-                    Centros de Reciclaje ({sortedAndFilteredCenters.length})
+                    {activeFilter === 'Talleres' ? `Talleres y Pláticas (${filteredTalleres.length})` : `Centros de Reciclaje (${sortedAndFilteredCenters.length})`}
                   </div>
                   
-                  {sortedAndFilteredCenters.length > 0 ? (
-                    sortedAndFilteredCenters.map((center) => renderCenterCard(center))
+                  {activeFilter === 'Talleres' ? (
+                    filteredTalleres.length > 0 ? (
+                      <>
+                        {renderComoSolicitarBlock()}
+                        {filteredTalleres.map((taller) => renderTallerCard(taller))}
+                      </>
+                    ) : (
+                      <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        No se encontraron talleres coincidentes.
+                      </div>
+                    )
                   ) : (
-                    <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                      No se encontraron centros coincidentes.
-                    </div>
+                    sortedAndFilteredCenters.length > 0 ? (
+                      sortedAndFilteredCenters.map((center) => renderCenterCard(center))
+                    ) : (
+                      <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                        No se encontraron centros coincidentes.
+                      </div>
+                    )
                   )}
                 </div>
               </aside>
@@ -562,13 +733,27 @@ const Home: React.FC = () => {
                       </div>
 
                       <div className="list-scroll-area no-scrollbar">
-                        {sortedAndFilteredCenters.length > 0 ? (
-                          sortedAndFilteredCenters.map((center) => renderCenterCard(center))
+                        {activeFilter === 'Talleres' ? (
+                          filteredTalleres.length > 0 ? (
+                            <>
+                              {renderComoSolicitarBlock()}
+                              {filteredTalleres.map((taller) => renderTallerCard(taller))}
+                            </>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 10px', color: 'var(--text-secondary)' }}>
+                              <IonIcon icon={alertCircleOutline} style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--text-muted)' }} />
+                              <div style={{ fontSize: '13.5px', fontWeight: 500 }}>No hay talleres</div>
+                            </div>
+                          )
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 10px', color: 'var(--text-secondary)' }}>
-                            <IonIcon icon={alertCircleOutline} style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--text-muted)' }} />
-                            <div style={{ fontSize: '13.5px', fontWeight: 500 }}>No hay centros</div>
-                          </div>
+                          sortedAndFilteredCenters.length > 0 ? (
+                            sortedAndFilteredCenters.map((center) => renderCenterCard(center))
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 10px', color: 'var(--text-secondary)' }}>
+                              <IonIcon icon={alertCircleOutline} style={{ fontSize: '32px', marginBottom: '8px', color: 'var(--text-muted)' }} />
+                              <div style={{ fontSize: '13.5px', fontWeight: 500 }}>No hay centros</div>
+                            </div>
+                          )
                         )}
                       </div>
                     </div>
