@@ -22,6 +22,7 @@ import {
 import './Home.css';
 import { centersData, RecyclingCenter, SUB_FILTER_GROUPS, Categoria } from '../data/centersData';
 import RecyclingMapView from '../components/RecyclingMapView';
+import MapErrorBoundary from '../components/MapErrorBoundary';
 
 const Home: React.FC = () => {
 
@@ -270,7 +271,7 @@ const Home: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="ion-no-padding">
+      <IonContent fullscreen scrollY={false} className="ion-no-padding">
         <div className="home-container">
           <div className="app-viewport">
             
@@ -393,13 +394,14 @@ const Home: React.FC = () => {
                   <div className={`mobile-tab-view ${activeTab === 'mapa' ? 'active' : ''}`}>
                     <div className="map-canvas-container">
 
-                      <RecyclingMapView
-                        centers={filteredCenters}
-                        selectedCenter={selectedCenter}
-                        onSelectCenter={handleSelectCenter}
-                        userPosition={userPosition}
-                        activeTab={activeTab}
-                      />
+                      <MapErrorBoundary>
+                        <RecyclingMapView
+                          centers={filteredCenters}
+                          selectedCenter={selectedCenter}
+                          onSelectCenter={handleSelectCenter}
+                          userPosition={userPosition}
+                        />
+                      </MapErrorBoundary>
 
                       {/* Floating locator action buttons */}
                       <div className={`floating-actions-container ${isSheetOpen && selectedCenter ? 'has-sheet' : ''}`}>

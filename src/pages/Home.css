@@ -14,8 +14,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100vw;
-  height: 100vh;
+  /* 100% del alto real de ion-content, no 100vh: en móvil 100vh incluye el
+     área que la barra de direcciones del navegador oculta/muestra al hacer
+     scroll, lo que dejaba contenido cortado y forzaba scroll para verlo todo. */
+  width: 100%;
+  height: 100%;
   background-color: #0c0c0c;
   font-family: var(--font-family);
   color: var(--text-primary);
